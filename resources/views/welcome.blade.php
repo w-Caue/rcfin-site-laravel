@@ -28,7 +28,7 @@
 
 <body
     class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
-    <header class="w-full container text-sm mb-6 not-has-[nav]:hidden">
+    <header id="navbar" class="w-full container text-sm mb-6 not-has-[nav]:hidden sticky top-1">
         @if (Route::has('login'))
             <nav class="flex items-center justify-between gap-4">
                 <div class="flex items-center">
@@ -78,7 +78,7 @@
         @endif
     </header>
 
-    <div class="container flex w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">
+    <div id="content" class="container flex w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">
         <main class="flex justify-between items-center md:px-5 w-full flex-col-reverse lg:flex-row">
             <div class="space-y-7 lg:max-w-4xl">
                 <span class="text-blue-500 font-medium pl-2">Rica Informática</span>
@@ -127,7 +127,8 @@
 
                 </div>
 
-                <img class="hidden lg:block relative max-w-xl z-50" src="{{ asset('img/sistema.svg') }}" alt="">
+                <img id="imagemLogo" class="hidden lg:block relative max-w-xl z-50" src="{{ asset('img/sistema.svg') }}"
+                    alt="">
             </div>
 
         </main>
@@ -137,5 +138,17 @@
         <div class="h-14.5 hidden lg:block"></div>
     @endif
 </body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"
+    integrity="sha512-aNMyYYxdIxIaot0Y1/PLuEu3eipGCmsEUBrUq+7aVyPGMFH8z0eTP0tkqAvv34fzN6z+201d3T8HPb1svWSKHQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="{{ asset('js/anime.js') }}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+
+<script src="{{ asset('js/gsap.js') }}"></script>
 
 </html>
