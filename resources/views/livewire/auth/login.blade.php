@@ -9,10 +9,15 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 new #[Layout('components.layouts.auth')] class extends Component {
-    #[Validate('required|string|email')]
+    // #[Validate('required|string|email')]
     public string $email = '';
+
+    #[Validate('required|')]
+    public string $cnpj = '';
 
     #[Validate('required|string')]
     public string $password = '';
@@ -26,18 +31,21 @@ new #[Layout('components.layouts.auth')] class extends Component {
     {
         $this->validate();
 
-        $this->ensureIsNotRateLimited();
+        $cnpj = preg_replace('/[^0-9]/', '', (string) $this->cnpj);
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            RateLimiter::hit($this->throttleKey());
+        $empresa = User::where('cnpj', $cnpj)->first();
 
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
+        if (!$empresa) {
+            return;
         }
 
-        RateLimiter::clear($this->throttleKey());
-        Session::regenerate();
+        $senhaCorreta = Hash::check($this->password, $empresa->password);
+
+        if (!$senhaCorreta) {
+            return;
+        }
+
+        Auth::login($empresa, false);
 
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
@@ -73,15 +81,18 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="flex flex-col gap-6">
-    <x-auth-header title="Entre na sua conta" description="Digite seu e-mail e senha abaixo para efetuar login" />
+    <x-auth-header title="Entre na sua conta" description="Digite seu cnpj e senha abaixo para efetuar login" />
 
     <!-- Session Status -->
     <x-auth-session-status class="text-center" :status="session('status')" />
 
     <form wire:submit="login" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <flux:input wire:model="email" label="{{ __('Email') }}" type="email" name="email" required autofocus
-            autocomplete="email" placeholder="email@example.com" />
+        <!-- Cnpj -->
+        <flux:input wire:model="cnpj" label="{{ __('Cnpj') }}" name="cnpj" required autofocus autocomplete="cnpj"
+            placeholder="12.3456.678/0009-10"
+            x-mask:dynamic="
+            $input.startsWith('18') ? '99.999.999/9999-99' : '99.999.999/9999-99'
+        " />
 
         <!-- Password -->
         <div class="relative">

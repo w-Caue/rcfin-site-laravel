@@ -9,29 +9,38 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('components.layouts.auth')] class extends Component {
+    #[Validate('required|string')]
     public string $name = '';
+    #[Validate('required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class)]
     public string $email = '';
-    public string $password = '';
-    public string $password_confirmation = '';
+    #[Validate('required', 'unique:' . User::class)]
+    public string $cnpj = '';
+    #[Validate('required')]
+    public string $whatsapp = '';
 
     /**
      * Handle an incoming registration request.
      */
     public function register(): void
     {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+        $cnpj = preg_replace('/[^0-9]/', '', (string) $this->cnpj);
+        $whatsapp = preg_replace('/[^0-9]/', '', (string) $this->whatsapp);
+
+        $new = User::create([
+            'name' => $this->name,
+            'email' => $this->email,
+            'cnpj' => $cnpj,
+            'whatsapp' => $whatsapp,
+            'password' => Hash::make(12345678),
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
+        if ($new->save()) {
+            Auth::login($new);
 
-        event(new Registered(($user = User::create($validated))));
+            $this->redirect(route('dashboard', absolute: false), navigate: true);
+        }
 
-        Auth::login($user);
-
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        // event(new Registered(($user = User::create($validated))));
     }
 }; ?>
 
@@ -50,14 +59,19 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <flux:input wire:model="email" id="email" label="{{ __('Email') }}" type="email" name="email" required
             autocomplete="email" placeholder="email@example.com" />
 
-        <!-- Password -->
-        <flux:input wire:model="password" id="password" label="{{ __('Senha') }}" type="password" name="password"
-            required autocomplete="new-password" placeholder="Insira a senha" />
+        <!-- Whatsapp -->
+        <flux:input wire:model="whatsapp" label="{{ __('Whatsapp') }}" name="whatsapp" required autofocus
+            autocomplete="whatsapp" placeholder="(12) 3 4567-8910"
+            x-mask:dynamic="
+            $input.startsWith('18') ? '(99) 9 9999-9999' : '(99) 9 9999-9999'
+            " />
 
-        <!-- Confirm Password -->
-        <flux:input wire:model="password_confirmation" id="password_confirmation" label="{{ __('Confirme a senha') }}"
-            type="password" name="password_confirmation" required autocomplete="new-password"
-            placeholder="Confirme a senha" />
+        <!-- Cnpj -->
+        <flux:input wire:model="cnpj" label="{{ __('Cnpj') }}" name="cnpj" required autofocus autocomplete="cnpj"
+            placeholder="12.3456.678/0009-10"
+            x-mask:dynamic="
+            $input.startsWith('18') ? '99.999.999/9999-99' : '99.999.999/9999-99'
+        " />
 
         <div class="flex items-center justify-end">
             <flux:button type="submit" variant="primary" class="w-full">
